@@ -1,5 +1,5 @@
 # 키위 농장 Kiwi Farm
-한국어 형태소 분석기 Kiwi를 활용한 딥러닝 언어 모델들을 실험적으로 키우는 공간입니다.
+[한국어 형태소 분석기 Kiwi](https://github.com/bab2min/Kiwi)를 활용한 딥러닝 언어 모델들을 실험적으로 키우는 공간입니다.
 
 BERT, GPT, BART와 같은 딥러닝 언어모델에서는 크기가 고정된 닫힌 어휘 집합을 사용합니다. 
 따라서 딥러닝 언어모델에 텍스트를 입력하려면 임의의 텍스트를 고정된 어휘 집합으로 분할하여 변환해주는 토크나이저(Tokenizer)가 필수적입니다.
@@ -10,7 +10,7 @@ BERT, GPT, BART와 같은 딥러닝 언어모델에서는 크기가 고정된 �
 `Kiwi`는 0.15버전에서부터 형태소 분석과 Subword 분절 기능을 통합한 Unigram 토크나이저를 제공합니다. 
 이 저장소에서는 Kiwi를 기반으로한 토크나이저의 성능을 실험하고, 실제로 이 토크나이저를 기반으로 학습한 딥러닝 모델의 특징을 분석해보고자 합니다.
 
-이 저장소에서 공개된 Kiwi 기반의 딥러닝 언어 모델을 사용하려면 `kiwipiepy>=0.15.1`과 `transformers>=4.12`가 필요합니다. 요구사항이 모두 준비된 상황이라면 아래와 같이 간단하게 kiwi-farm의 모델을 가져와서 사용할 수 있습니다. 
+이 저장소에서 공개된 Kiwi 기반의 딥러닝 언어 모델을 사용하려면 [`kiwipiepy>=0.15.1`](https://github.com/bab2min/kiwipiepy)과 `transformers>=4.12`가 필요합니다. 요구사항이 모두 준비된 상황이라면 아래와 같이 간단하게 [kiwi-farm](https://huggingface.co/kiwi-farm)의 모델을 가져와서 사용할 수 있습니다. 
 ```python
 from transformers import (
     AutoTokenizer, 
