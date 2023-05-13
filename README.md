@@ -10,6 +10,22 @@ BERT, GPT, BART와 같은 딥러닝 언어모델에서는 크기가 고정된 �
 `Kiwi`는 0.15버전에서부터 형태소 분석과 Subword 분절 기능을 통합한 Unigram 토크나이저를 제공합니다. 
 이 저장소에서는 Kiwi를 기반으로한 토크나이저의 성능을 실험하고, 실제로 이 토크나이저를 기반으로 학습한 딥러닝 모델의 특징을 분석해보고자 합니다.
 
+이 저장소에서 공개된 Kiwi 기반의 딥러닝 언어 모델을 사용하려면 `kiwipiepy>=0.15.1`과 `transformers>=4.12`가 필요합니다. 요구사항이 모두 준비된 상황이라면 아래와 같이 간단하게 kiwi-farm의 모델을 가져와서 사용할 수 있습니다. 
+```python
+from transformers import (
+    AutoTokenizer, 
+    AutoModelForMaskedLM, 
+)
+import kiwipiepy.transformers_addon
+# kiwipiepy.transformers_addon를 import해야
+# KiwiTokenizer가 AutoTokenizer에 등록된다.
+# KiwiTokenizer는 PreTrainedTokenizer와 대부분의 기능이 호환되므로
+# 기존의 transformers 코드를 그대로 사용할 수 있다.
+
+tokenizer = AutoTokenizer.from_pretrained('kiwi-farm/roberta-base-32k')
+model = AutoModelForMaskedLM.from_pretrained('kiwi-farm/roberta-base-32k')
+```
+
 ## 토크나이저 
 
 `KiwiTokenizer`를 학습하는 데에는 다음과 같은 말뭉치를 사용했습니다.
@@ -109,14 +125,40 @@ BERT, GPT, BART와 같은 딥러닝 언어모델에서는 크기가 고정된 �
 * 첫가끝 코드를 지원하여 옛한글에 대해서도 `UNK`를 생성하지 않습니다. 일부 방점은 어휘집합에 포함되지 않아서 UTF8 byte로 분절되고 있음을 확인할 수 있습니다.
 
 ## AutoEncoding 언어 모델
-`KiwiTokenizer`가 딥러닝 언어 모델에서 얼마나 유용한지 확인하기 위해 실제로 RoBERTa 모델을 사전학습해 보았습니다. 사전학습은 바닥부터 진행된 것은 아니며 이미 강력한 것으로 확인된 [klue/roberta-base 모델](https://huggingface.co/klue/roberta-base)을 재활용하여 어휘 집합만 갈아끼운 뒤 추가 학습을 진행하는 방식으로 수행되었습니다. 사전 학습 절차에 대해서는 `train_bert.py` 코드를 참조해주세요.
-실험은 klue/roberta-base와 동일한 어휘 집합 크기를 가진 KiwiTokenizer 32k를 바탕으로 진행하였습니다.
+`KiwiTokenizer`가 딥러닝 언어 모델에서 얼마나 유용한지 확인하기 위해 실제로 RoBERTa 모델을 사전학습해 보았습니다. 사전학습은 바닥부터 진행된 것은 아니며 이미 강력한 것으로 확인된 [klue/roberta-base 모델](https://huggingface.co/klue/roberta-base)을 재활용하여 어휘 집합만 갈아끼운 뒤 추가 학습을 진행하는 방식으로 수행되었습니다. 사전 학습은 klue/roberta-base와 동일한 어휘 집합 크기를 가진 KiwiTokenizer 32k를 바탕으로 진행되었습니다. 사전 학습 절차에 대해서는 `train_bert.py` 코드를 참조해주세요. 사전학습이 완료된 모델은 [kiwi-farm/roberta-base-32k(huggingface 모델 저장소)](https://huggingface.co/kiwi-farm/roberta-base-32k)에서 다운로드 받을 수 있습니다.
 
+사전 학습이 완료된 모델의 성능을 평가하기 위해 다양한 데이터셋으로 미세조정을 실시하였습니다. 노이즈가 많은 환경을 고려하여 미세조정을 평가할 때 평가데이터셋을 크게 3종류로 변형하였습니다.
+* 기본: 변형 적용 안 함
+* NoSpace: 평가 텍스트에서 공백을 모두 제거
+* AllSpace: 평가 텍스트의 각 글자 사이에 공백 모두 삽입
+* Random: 20%의 확률로 공백을 삽입하거나 제거함
+
+<table>
+<caption>평가 결과 요약</caption>
+<tr><th>모델</th><th>NSMC</th><th>KLUE YNAT</th></tr>
+<tr><th>Kiwi RoBERTa Base</th><td><b>0.8992</b></td><td><b>0.8501</b></td></tr>
+<tr><th>Klue RoBERTa Base</th><td>0.8282</td><td>0.7088</td></tr>
+<tr><th>Beomi KcBert Base</th><td>0.8353</td><td>0.6456</td></tr>
+<tr><th>HanBert 54kN Base</th><td>0.8363</td><td>0.7345</td></tr>
+</table>
+
+* 기본, NoSpace, AllSpace, Random 테스트 결과를 평균낸 것
+* 변형이 적용 안 된 평가셋에 대해서는 Klue 모델이 제일 좋은 성능을 내었으나, 공백 오류가 들어갈 수록 모델의 성능이 급하락
+* Kiwi 모델의 경우 공백 오류에 대해 대체적으로 강건한 성능을 보임
 
 ### 미세조정: NSMC
-num_train_epochs: 2
-#### Kiwi RoBERTa Base
+
+따라해보기
+```bash
+python src/finetuning/sequence_classification.py --model_name_or_path kiwi-farm/roberta-base-32k --output_dir results --dataset nsmc --key document --num_train_epochs 2
+
+python src/finetuning/sequence_classification.py --model_name_or_path klue/roberta-base --output_dir results --dataset nsmc --key document --num_train_epochs 2
+
+python src/finetuning/sequence_classification.py --model_name_or_path beomi/kcbert-base --output_dir results --dataset nsmc --key document --num_train_epochs 2
+```
+
 <table>
+<caption>Kiwi RoBERTa Base</caption>
 <tr><th></th><th>기본</th><th>NoSpace</th><th>AllSpace</th><th>Random</th></tr>
 <tr><th>Train 기본</th><td>0.90852</td><td>0.90304</td><td>0.89204</td><td>0.8933</td></tr>
 <tr><th>Train NoSpace</th><td>0.90894</td><td>0.90692</td><td>0.89142</td><td>0.897</td></tr>
@@ -124,8 +166,8 @@ num_train_epochs: 2
 <tr><th>Train Random</th><td>0.9063</td><td>0.9054</td><td>0.9006</td><td>0.90262</td></tr>
 </table>
 
-#### Klue RoBERTa Base
 <table>
+<caption>Klue RoBERTa Base</caption>
 <tr><th></th><th>기본</th><th>NoSpace</th><th>AllSpace</th><th>Random</th></tr>
 <tr><th>Train 기본</th><td>0.91336</td><td>0.88068</td><td>0.7013</td><td>0.81746</td></tr>
 <tr><th>Train NoSpace</th><td>0.91014</td><td>0.8928</td><td>0.73992</td><td>0.84966</td></tr>
@@ -133,8 +175,8 @@ num_train_epochs: 2
 <tr><th>Train Random</th><td>0.9039</td><td>0.88418</td><td>0.8723</td><td>0.88838</td></tr>
 </table>
 
-#### Beomi KcBert Base
 <table>
+<caption>Beomi KcBert Base</caption>
 <tr><th></th><th>기본</th><th>NoSpace</th><th>AllSpace</th><th>Random</th></tr>
 <tr><th>Train 기본</th><td>0.90508</td><td>0.88036</td><td>0.73222</td><td>0.82366</td></tr>
 <tr><th>Train NoSpace</th><td>0.89216</td><td>0.88262</td><td>0.76896</td><td>0.83242</td></tr>
@@ -142,8 +184,8 @@ num_train_epochs: 2
 <tr><th>Train Random</th><td>0.89212</td><td>0.87988</td><td>0.86962</td><td>0.88248</td></tr>
 </table>
 
-#### HanBert 54kN Base
 <table>
+<caption>HanBert 54kN Base</caption>
 <tr><th></th><th>기본</th><th>NoSpace</th><th>AllSpace</th><th>Random</th></tr>
 <tr><th>Train 기본</th><td>0.90594</td><td>0.8733</td><td>0.74226</td><td>0.82358</td></tr>
 <tr><th>Train NoSpace</th><td>0.89868</td><td>0.8911</td><td>0.8171</td><td>0.8501</td></tr>
@@ -152,9 +194,17 @@ num_train_epochs: 2
 </table>
 
 ### 미세조정: Klue YNAT
-num_train_epochs: 3
-#### Kiwi RoBERTa Base
+따라해보기
+```bash
+python src/finetuning/sequence_classification.py --model_name_or_path kiwi-farm/roberta-base-32k --output_dir results --dataset klue --subset ynat --key title --num_train_epochs 3
+
+python src/finetuning/sequence_classification.py --model_name_or_path klue/roberta-base --output_dir results --dataset klue --subset ynat --key title --num_train_epochs 3
+
+python src/finetuning/sequence_classification.py --model_name_or_path beomi/kcbert-base --output_dir results --dataset klue --subset ynat --key title --num_train_epochs 3
+```
+
 <table>
+<caption>Kiwi RoBERTa Base</caption>
 <tr><th></th><th>기본</th><th>NoSpace</th><th>AllSpace</th><th>Random</th></tr>
 <tr><th>Train 기본</th><td>0.86570</td><td>0.85275</td><td>0.84396</td><td>0.83814</td></tr>
 <tr><th>Train NoSpace</th><td>0.86274</td><td>0.85560</td><td>0.84396</td><td>0.84671</td></tr>
@@ -162,8 +212,8 @@ num_train_epochs: 3
 <tr><th>Train Random</th><td>0.86603</td><td>0.85736</td><td>0.84385</td><td>0.84737</td></tr>
 </table>
 
-#### Klue RoBERTa Base
 <table>
+<caption>Klue RoBERTa Base</caption>
 <tr><th></th><th>기본</th><th>NoSpace</th><th>AllSpace</th><th>Random</th></tr>
 <tr><th>Train 기본</th><td>0.86845</td><td>0.82431</td><td>0.43043</td><td>0.71186</td></tr>
 <tr><th>Train NoSpace</th><td>0.87152</td><td>0.85703</td><td>0.53167</td><td>0.76128</td></tr>
@@ -171,8 +221,8 @@ num_train_epochs: 3
 <tr><th>Train Random</th><td>0.86054</td><td>0.84495</td><td>0.68957</td><td>0.81058</td></tr>
 </table>
 
-#### Beomi KcBert Base
 <table>
+<caption>Beomi KcBert Base</caption>
 <tr><th></th><th>기본</th><th>NoSpace</th><th>AllSpace</th><th>Random</th></tr>
 <tr><th>Train 기본</th><td>0.83770</td><td>0.79620</td><td>0.29559</td><td>0.65279</td></tr>
 <tr><th>Train NoSpace</th><td>0.82980</td><td>0.81618</td><td>0.31997</td><td>0.67179</td></tr>
@@ -180,8 +230,8 @@ num_train_epochs: 3
 <tr><th>Train Random</th><td>0.81805</td><td>0.80432</td><td>0.59591</td><td>0.77709</td></tr>
 </table>
 
-#### HanBert 54kN Base
 <table>
+<caption>HanBert 54kN Base</caption>
 <tr><th></th><th>기본</th><th>NoSpace</th><th>AllSpace</th><th>Random</th></tr>
 <tr><th>Train 기본</th><td>0.86680</td><td>0.82573</td><td>0.51564</td><td>0.72976</td></tr>
 <tr><th>Train NoSpace</th><td>0.85297</td><td>0.82595</td><td>0.50444</td><td>0.73448</td></tr>
