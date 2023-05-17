@@ -125,7 +125,7 @@ model = AutoModelForMaskedLM.from_pretrained('kiwi-farm/roberta-base-32k')
 * Kiwi는 첫가끝 코드를 지원하여 옛한글에 대해서도 `UNK`를 생성하지 않습니다. 일부 방점은 어휘집합에 포함되지 않아서 UTF8 byte로 분절되고 있음을 확인할 수 있습니다.
 
 ## AutoEncoding 언어 모델
-`KiwiTokenizer`가 딥러닝 언어 모델에서 얼마나 유용한지 확인하기 위해 실제로 RoBERTa 모델을 사전학습해 보았습니다. 사전학습은 바닥부터 진행된 것은 아니며 이미 강력한 것으로 확인된 [klue/roberta-base 모델](https://huggingface.co/klue/roberta-base)을 재활용하여 어휘 집합만 갈아끼운 뒤 추가 학습을 진행하는 방식으로 수행되었습니다. 사전 학습은 klue/roberta-base와 동일한 어휘 집합 크기를 가진 KiwiTokenizer 32k를 바탕으로 진행되었습니다. 사전 학습 절차에 대해서는 `train_bert.py` 코드를 참조해주세요. 사전학습이 완료된 모델은 [kiwi-farm/roberta-base-32k(huggingface 모델 저장소)](https://huggingface.co/kiwi-farm/roberta-base-32k)에서 다운로드 받을 수 있습니다.
+`KiwiTokenizer`가 딥러닝 언어 모델에서 얼마나 유용한지 확인하기 위해 실제로 RoBERTa 모델을 사전학습해 보았습니다. 사전학습은 바닥부터 진행된 것은 아니며 이미 강력한 것으로 확인된 [klue/roberta-base 모델](https://huggingface.co/klue/roberta-base)을 재활용하여 어휘 집합만 갈아끼운 뒤 추가 학습을 진행하는 방식으로 수행되었습니다. 사전 학습은 klue/roberta-base와 동일한 어휘 집합 크기를 가진 KiwiTokenizer 32k와 klue보다 어휘 집합이 2배 큰 KiwiTokenizer 64k를 바탕으로 진행되었습니다. 사전 학습 절차에 대해서는 `train_bert.py` 코드를 참조해주세요. 사전학습이 완료된 모델은 [kiwi-farm/roberta-base-32k(huggingface 모델 저장소)](https://huggingface.co/kiwi-farm/roberta-base-32k) 및 [kiwi-farm/roberta-base-64k(huggingface 모델 저장소)](https://huggingface.co/kiwi-farm/roberta-base-64k)에서 다운로드 받을 수 있습니다.
 
 사전 학습이 완료된 모델의 성능을 평가하기 위해 다양한 데이터셋으로 미세조정을 실시하였습니다. 노이즈가 많은 환경을 고려하여 미세조정을 평가할 때 평가데이터셋을 크게 3종류로 변형하였습니다.
 * 기본: 변형 적용 안 함
@@ -136,7 +136,8 @@ model = AutoModelForMaskedLM.from_pretrained('kiwi-farm/roberta-base-32k')
 <table>
 <caption>평가 결과 요약</caption>
 <tr><th>모델</th><th>NSMC</th><th>KLUE YNAT</th></tr>
-<tr><th>Kiwi RoBERTa Base</th><td><b>0.8992</b></td><td><b>0.8501</b></td></tr>
+<tr><th>Kiwi RoBERTa Base (32k)</th><td><b>0.8992</b></td><td><b>0.8501</b></td></tr>
+<tr><th>Kiwi RoBERTa Base (64k)</th><td><b>0.9030</b></td><td><b>0.8510</b></td></tr>
 <tr><th>Klue RoBERTa Base</th><td>0.8282</td><td>0.7088</td></tr>
 <tr><th>Beomi KcBert Base</th><td>0.8353</td><td>0.6456</td></tr>
 <tr><th>HanBert 54kN Base</th><td>0.8363</td><td>0.7345</td></tr>
@@ -152,18 +153,29 @@ model = AutoModelForMaskedLM.from_pretrained('kiwi-farm/roberta-base-32k')
 ```bash
 python src/finetuning/sequence_classification.py --model_name_or_path kiwi-farm/roberta-base-32k --output_dir results --dataset nsmc --key document --num_train_epochs 2
 
+python src/finetuning/sequence_classification.py --model_name_or_path kiwi-farm/roberta-base-64k --output_dir results --dataset nsmc --key document --num_train_epochs 2
+
 python src/finetuning/sequence_classification.py --model_name_or_path klue/roberta-base --output_dir results --dataset nsmc --key document --num_train_epochs 2
 
 python src/finetuning/sequence_classification.py --model_name_or_path beomi/kcbert-base --output_dir results --dataset nsmc --key document --num_train_epochs 2
 ```
 
 <table>
-<caption>Kiwi RoBERTa Base</caption>
+<caption>Kiwi RoBERTa Base (32k)</caption>
 <tr><th></th><th>기본</th><th>NoSpace</th><th>AllSpace</th><th>Random</th></tr>
 <tr><th>Train 기본</th><td>0.90852</td><td>0.90304</td><td>0.89204</td><td>0.8933</td></tr>
 <tr><th>Train NoSpace</th><td>0.90894</td><td>0.90692</td><td>0.89142</td><td>0.897</td></tr>
 <tr><th>Train AllSpace</th><td>0.9055</td><td>0.89748</td><td>0.90544</td><td>0.897</td></tr>
 <tr><th>Train Random</th><td>0.9063</td><td>0.9054</td><td>0.9006</td><td>0.90262</td></tr>
+</table>
+
+<table>
+<caption>Kiwi RoBERTa Base (64k)</caption>
+<tr><th></th><th>기본</th><th>NoSpace</th><th>AllSpace</th><th>Random</th></tr>
+<tr><th>Train 기본</th><td>0.91278</td><td>0.90742</td><td>0.89512</td><td>0.89676</td></tr>
+<tr><th>Train NoSpace</th><td>0.91172</td><td>0.90962</td><td>0.89124</td><td>0.89918</td></tr>
+<tr><th>Train AllSpace</th><td>0.90712</td><td>0.8979</td><td>0.90668</td><td>0.89734</td></tr>
+<tr><th>Train Random</th><td>0.91164</td><td>0.90942</td><td>0.904</td><td>0.9071</td></tr>
 </table>
 
 <table>
@@ -198,18 +210,29 @@ python src/finetuning/sequence_classification.py --model_name_or_path beomi/kcbe
 ```bash
 python src/finetuning/sequence_classification.py --model_name_or_path kiwi-farm/roberta-base-32k --output_dir results --dataset klue --subset ynat --key title --num_train_epochs 3
 
+python src/finetuning/sequence_classification.py --model_name_or_path kiwi-farm/roberta-base-64k --output_dir results --dataset klue --subset ynat --key title --num_train_epochs 3
+
 python src/finetuning/sequence_classification.py --model_name_or_path klue/roberta-base --output_dir results --dataset klue --subset ynat --key title --num_train_epochs 3
 
 python src/finetuning/sequence_classification.py --model_name_or_path beomi/kcbert-base --output_dir results --dataset klue --subset ynat --key title --num_train_epochs 3
 ```
 
 <table>
-<caption>Kiwi RoBERTa Base</caption>
+<caption>Kiwi RoBERTa Base (32k)</caption>
 <tr><th></th><th>기본</th><th>NoSpace</th><th>AllSpace</th><th>Random</th></tr>
 <tr><th>Train 기본</th><td>0.86570</td><td>0.85275</td><td>0.84396</td><td>0.83814</td></tr>
 <tr><th>Train NoSpace</th><td>0.86274</td><td>0.85560</td><td>0.84396</td><td>0.84671</td></tr>
 <tr><th>Train AllSpace</th><td>0.86449</td><td>0.84396</td><td>0.85582</td><td>0.83902</td></tr>
 <tr><th>Train Random</th><td>0.86603</td><td>0.85736</td><td>0.84385</td><td>0.84737</td></tr>
+</table>
+
+<table>
+<caption>Kiwi RoBERTa Base (64k)</caption>
+<tr><th></th><th>기본</th><th>NoSpace</th><th>AllSpace</th><th>Random</th></tr>
+<tr><th>Train 기본</th><td>0.86581</td><td>0.85780</td><td>0.84034</td><td>0.84034</td></tr>
+<tr><th>Train NoSpace</th><td>0.86691</td><td>0.86449</td><td>0.84100</td><td>0.84769</td></tr>
+<tr><th>Train AllSpace</th><td>0.86724</td><td>0.85560</td><td>0.85944</td><td>0.84802</td></tr>
+<tr><th>Train Random</th><td>0.86548</td><td>0.86329</td><td>0.84616</td><td>0.85198</td></tr>
 </table>
 
 <table>
