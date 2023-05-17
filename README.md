@@ -122,7 +122,7 @@ model = AutoModelForMaskedLM.from_pretrained('kiwi-farm/roberta-base-32k')
 <tr><th>HanBert-54kN-torch</th><td>['나', '##랏', '[UNK]', '말', '[UNK]', '[UNK]', '[UNK]', '[UNK]', '[UNK]', '에', '[UNK]', '달아', '[UNK]', '[UNK]', '[UNK]', '와', '[UNK]', '로', '[UNK]', '[UNK]', '[UNK]', '아니', '[UNK]', '[UNK]', '[UNK]']</td></tr>
 </table>
 
-* Kiwi는 첫가끝 코드를 지원하여 옛한글에 대해서도 `UNK`를 생성하지 않습니다. 일부 방점은 어휘집합에 포함되지 않아서 UTF8 byte로 분절되고 있음을 확인할 수 있습니다.
+* Kiwi는 첫가끝 코드를 지원하여 옛한글에 대해서도 `UNK`를 생성하지 않습니다. 다만 일부 방점은 어휘집합에 포함되지 않아서 UTF8 byte로 분절됩니다.
 
 ## AutoEncoding 언어 모델
 `KiwiTokenizer`가 딥러닝 언어 모델에서 얼마나 유용한지 확인하기 위해 실제로 RoBERTa 모델을 사전학습해 보았습니다. 사전학습은 바닥부터 진행된 것은 아니며 이미 강력한 것으로 확인된 [klue/roberta-base 모델](https://huggingface.co/klue/roberta-base)을 재활용하여 어휘 집합만 갈아끼운 뒤 추가 학습을 진행하는 방식으로 수행되었습니다. 사전 학습은 klue/roberta-base와 동일한 어휘 집합 크기를 가진 KiwiTokenizer 32k와 klue보다 어휘 집합이 2배 큰 KiwiTokenizer 64k를 바탕으로 진행되었습니다. 사전 학습 절차에 대해서는 `train_bert.py` 코드를 참조해주세요. 사전학습이 완료된 모델은 [kiwi-farm/roberta-base-32k(huggingface 모델 저장소)](https://huggingface.co/kiwi-farm/roberta-base-32k) 및 [kiwi-farm/roberta-base-64k(huggingface 모델 저장소)](https://huggingface.co/kiwi-farm/roberta-base-64k)에서 다운로드 받을 수 있습니다.
